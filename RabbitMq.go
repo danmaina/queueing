@@ -38,7 +38,7 @@ func (r RabbitMQ) createChannel(c *amqp.Connection) (*amqp.Channel, error) {
 	return c.Channel()
 }
 
-func InitializeAsyncRabbitConsumers(mq RabbitMQ, processingFunc func()(string, error)) *amqp.Connection {
+func InitializeAsyncRabbitConsumers(mq RabbitMQ, processingFunc func(msg amqp.Delivery)(string, error)) *amqp.Connection {
 
 	rabbitConnection, errGettingRabbitConn := mq.createRabbitConnection()
 
@@ -58,7 +58,7 @@ func InitializeAsyncRabbitConsumers(mq RabbitMQ, processingFunc func()(string, e
 	return rabbitConnection
 }
 
-func consumeFromRabbit(rabbitConnection *amqp.Connection, r RabbitMQ, processingFunc func()(string, error)) chan *amqp.Error {
+func consumeFromRabbit(rabbitConnection *amqp.Connection, r RabbitMQ, processingFunc func(msg amqp.Delivery)(string, error)) chan *amqp.Error {
 
 	// Get Channels and Create consumers
 	for i := 0; i < r.ConsumerCount; i++ {
@@ -93,7 +93,7 @@ func consumeFromRabbit(rabbitConnection *amqp.Connection, r RabbitMQ, processing
 
 
 // Create A consumer that Consumes RabbitMQ Balance Enquiry Messages From Queue
-func consumeFromQueue(ch *amqp.Channel, prefetchCount, prefetchSize int, queueName string, qosGlobal, queueDurable, queueExclusive bool, processMessage func()(string, error)) error {
+func consumeFromQueue(ch *amqp.Channel, prefetchCount, prefetchSize int, queueName string, qosGlobal, queueDurable, queueExclusive bool, processMessage func(message amqp.Delivery)(string, error)) error {
 
 	// Initialize Queue
 	q, errQDeclare := ch.QueueDeclare(
@@ -137,7 +137,7 @@ func consumeFromQueue(ch *amqp.Channel, prefetchCount, prefetchSize int, queueNa
 
 			// TODO: Add function to be called
 
-			resultString, resultErr := processMessage()
+			resultString, resultErr := processMessage(msg)
 
 
 			if resultErr != nil {
