@@ -1,4 +1,4 @@
-module queueing
+module github.com/danmaina/queueing
 
 go 1.14
 
